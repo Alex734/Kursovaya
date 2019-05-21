@@ -19,4 +19,5 @@ namespace TextEditor
             Application.Run(new Main_Form());
         }
     }
+
 }

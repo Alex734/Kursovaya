@@ -7,25 +7,25 @@ using System.Windows.Forms;
 
 namespace TextEditor
 {
-    public partial class Main_Form : Form
+    public abstract partial class Main_Form : Form
     {
         public Main_Form()
         {
             InitializeComponent();
         }
 
-
+        
         Stack<string> undoActions = new Stack<string>();
         Stack<string> redoActions = new Stack<string>();
         string path = "";
         string filename = "";
-        int change = 1;
+        int change = 0;
 
 
-        private DialogResult Proverka() // Запрос на сохранение изменений в документе
+        public  DialogResult Proverka() // Запрос на сохранение изменений в документе
         {
             DialogResult result = DialogResult.Ignore;
-            if (richTextBox1.Text != "")
+            if (richTextBox1.Text.Trim() != "" && change == 1)
             {
                 result = MessageBox.Show(
                     "Вы хотите сохранить изменения в Вашем документе?",
@@ -35,22 +35,69 @@ namespace TextEditor
             return result;
         }
 
-        private void newToolStripMenuItem_Click(object sender, EventArgs e) // Создание нового файла
+
+        
+
+
+        private void openToolStripMenuItem_Click(object sender, EventArgs e) // Открытие файла
         {
             DialogResult result = Proverka();
-                if (result == DialogResult.Yes)
-                {
-                    saveToolStripMenuItem_Click(sender, e);
-                }
-                else if (result == DialogResult.No)
-                {
-                    this.richTextBox1.Clear(); //Удаление текста из элем. упр. текстовым полем
-                }
+            if (result == DialogResult.Yes)
+            {
+                saveToolStripMenuItem_Click(sender, e);
+            }
+            else if (result == DialogResult.Cancel)
+            {
+                return;
+            }
+            else
+            {
+                if (openFileDialog1.ShowDialog() == DialogResult.Cancel)
+                    return;
+                // получаем выбранный файл
+                path = openFileDialog1.FileName;
+                filename = Path.GetFileNameWithoutExtension(path);
+                // читаем файл в строку
+                string fileText = File.ReadAllText(path, Encoding.Default);
+                richTextBox1.Text = fileText;
+                change = 0;
+
+                this.Text = filename;
+            }               
         }
 
 
+        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e) // Сохранение с созданием нового файла или перезаписью существующего
+        {
+            if (saveFileDialog1.ShowDialog() == DialogResult.Cancel)
+                return;
+            change = 0;
+            // получаем выбранный файл
+            path = saveFileDialog1.FileName;
+            filename = Path.GetFileNameWithoutExtension(path);
+            // сохраняем текст в файл
+            File.WriteAllText(path, richTextBox1.Text, Encoding.Default);
+
+            this.Text = filename;
+        }
+
+
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e) // Сохранение изменений в текущий документ
+        {
+            if (path != "")
+            {
+                File.WriteAllText(path, richTextBox1.Text, Encoding.Default);
+                change = 0;
+            }
+            else
+            {
+                saveAsToolStripMenuItem_Click(sender, e);
+            }
+        }
+
         private void Main_Form_FormClosing(object sender, FormClosingEventArgs e) // Закрытие формы по нажатию на крестик
         {
+
             if (change != 0)
             {
                 DialogResult result = Proverka();
@@ -65,50 +112,6 @@ namespace TextEditor
             }
         }
 
-
-        private void openToolStripMenuItem_Click(object sender, EventArgs e) // Открытие файла
-        {
-            if (openFileDialog1.ShowDialog() == DialogResult.Cancel)
-                return;
-            // получаем выбранный файл
-            path = openFileDialog1.FileName;
-            filename = Path.GetFileNameWithoutExtension(path);
-            // читаем файл в строку
-            string fileText = File.ReadAllText(path, Encoding.Default);
-            richTextBox1.Text = fileText;
-
-            this.Text = filename;
-        }
-
-
-        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e) // Сохранение с созданием нового файла или перезаписью существующего
-        {
-            if (saveFileDialog1.ShowDialog() == DialogResult.Cancel)
-                return;
-            change = 0;
-            // получаем выбранный файл
-            path = saveFileDialog1.FileName;
-            filename = Path.GetFileNameWithoutExtension(path);
-            // сохраняем текст в файл
-            File.WriteAllText(path, richTextBox1.Text);
-
-            this.Text = filename;
-        }
-
-
-        private void saveToolStripMenuItem_Click(object sender, EventArgs e) // Сохранение изменений в текущий документ
-        {
-            if (path != "")
-            {
-                File.WriteAllText(path, richTextBox1.Text);
-                change = 0;
-            }
-            else
-            {
-                saveAsToolStripMenuItem_Click(sender, e);
-            }
-        }
-
         private void quitToolStripMenuItem_Click(object sender, EventArgs e) // Закрытие формы по нажатию на кнопку в меню
         {
             DialogResult result = Proverka();
@@ -116,14 +119,13 @@ namespace TextEditor
             {
                 saveToolStripMenuItem_Click(sender, e);
 
+                change = 0;
                 this.Close();
             }
-            else if (result == DialogResult.Cancel)
+            else if (result == DialogResult.Cancel){}
+            else 
             {
-
-            }
-            else
-            {
+                change = 0;
                 this.Close();
             }
         }
@@ -169,6 +171,11 @@ namespace TextEditor
 
         private void richTextBox1_TextChanged(object sender, EventArgs e) // Проверка на возможность выполнения действия Undo/Redo
         {
+            if (richTextBox1.Text.Trim() != "")
+                findToolStripMenuItem.Enabled = true;
+            else
+                findToolStripMenuItem.Enabled = false;
+
             change = 1;
 
             if (undoActions.Count == 0)
@@ -304,7 +311,7 @@ namespace TextEditor
             pasteToolStripMenuItem_Click(sender,e);
         }
 
-        private void richTextBox1_Click(object sender, EventArgs e) // Определение состояния кнопок изменения стиля 
+        private void richTextBox1_Click(object sender, EventArgs e) // Определение состояния кнопок изменения стиля w
         {
             Font currentFont = richTextBox1.SelectionFont;
 
@@ -312,6 +319,42 @@ namespace TextEditor
             if (currentFont.Italic) toolStripButton2.Checked = true; else toolStripButton2.Checked = false;
             if (currentFont.Underline) toolStripButton3.Checked = true; else toolStripButton3.Checked = false;
             if (currentFont.Strikeout) toolStripButton4.Checked = true; else toolStripButton4.Checked = false;
+        }
+
+        private void findToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Find f = new Find();
+            f.Show();
+        }
+
+        public int Finding(string substr, int start)
+        {
+                    if (FindSubStr(substr, start) != -1)
+                    {
+                    start = FindSubStr(substr, start) + substr.Length;
+                    this.Activate(); 
+                    }
+                    else
+                    {
+                        MessageBox.Show("Слово найдено!");
+                    }
+            return start;
+        }
+
+        public int FindSubStr(string substr, int start)
+        {
+            int returnValue = -1;
+
+            if (substr.Length > 0 && start >= 0)
+            {
+                int indexToText = richTextBox1.Find(substr, start, RichTextBoxFinds.MatchCase);
+                if (indexToText >= 0)
+                {
+                    returnValue = indexToText;
+                }
+            }
+
+            return returnValue;
         }
     }
 }
