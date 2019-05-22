@@ -9,4 +9,3 @@ C:\Users\Alex\source\repos\TextEditor\TextEditor\obj\Debug\TextEditor.exe
 C:\Users\Alex\source\repos\TextEditor\TextEditor\obj\Debug\TextEditor.pdb
 C:\Users\Alex\source\repos\TextEditor\TextEditor\obj\Debug\TextEditor.Main_Form.resources
 C:\Users\Alex\source\repos\TextEditor\TextEditor\obj\Debug\TextEditor.Find.resources
-C:\Users\Alex\source\repos\TextEditor\TextEditor\obj\Debug\TextEditor.Replace.resources

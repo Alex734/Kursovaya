@@ -11,21 +11,7 @@ namespace TextEditor
             
         }
 
-
         private int start = 0;
-
-        public int _start
-        {
-            get
-            {
-                return start;
-            }
-            set
-            {
-                this.start = value;
-            }
-        }
-
 
         private void Cancel_Find_Click(object sender, EventArgs e)
         {

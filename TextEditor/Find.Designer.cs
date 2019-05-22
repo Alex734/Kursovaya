@@ -66,7 +66,7 @@
             this.find_furthr.Name = "find_furthr";
             this.find_furthr.Size = new System.Drawing.Size(104, 28);
             this.find_furthr.TabIndex = 4;
-            this.find_furthr.Text = "Find_Further";
+            this.find_furthr.Text = "Find Further";
             this.find_furthr.UseVisualStyleBackColor = true;
             this.find_furthr.Click += new System.EventHandler(this.find_furthr_Click);
             // 

@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace TextEditor
 {
-    public abstract partial class Main_Form : Form
+    public partial class Main_Form : Form
     {
         public Main_Form()
         {
@@ -22,21 +22,32 @@ namespace TextEditor
         int change = 0;
 
 
-        public  DialogResult Proverka() // Запрос на сохранение изменений в документе
+        private  DialogResult Proverka() // Запрос на сохранение изменений в документе
         {
             DialogResult result = DialogResult.Ignore;
             if (richTextBox1.Text.Trim() != "" && change == 1)
             {
                 result = MessageBox.Show(
-                    "Вы хотите сохранить изменения в Вашем документе?",
-                    "Блокнот",
+                    "Do you want to save changes to your document?",
+                    "TextEditor",
                     MessageBoxButtons.YesNoCancel);
             }
             return result;
         }
 
+        private void newToolStripMenuItem_Click(object sender, EventArgs e) // Создание нового файла
+        {
+            DialogResult result = Proverka();
+            if (result == DialogResult.Yes)
+            {
+                saveToolStripMenuItem_Click(sender, e);
+            }
+            else if (result == DialogResult.No)
+            {
+                this.richTextBox1.Clear(); //Удаление текста из элем. упр. текстовым полем
+            }
+        }
 
-        
 
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e) // Открытие файла
@@ -209,7 +220,7 @@ namespace TextEditor
             richTextBox1.Paste(); //Вставка
         }
 
-        private void fontToolStripMenuItem_Click(object sender, EventArgs e)
+        private void fontToolStripMenuItem_Click(object sender, EventArgs e) //Изменение шрифта текста
         {
             if (fontDialog1.ShowDialog() == DialogResult.OK)
             {
@@ -311,7 +322,7 @@ namespace TextEditor
             pasteToolStripMenuItem_Click(sender,e);
         }
 
-        private void richTextBox1_Click(object sender, EventArgs e) // Определение состояния кнопок изменения стиля w
+        private void richTextBox1_Click(object sender, EventArgs e) // Определение состояния кнопок изменения стиля 
         {
             Font currentFont = richTextBox1.SelectionFont;
 
@@ -327,7 +338,7 @@ namespace TextEditor
             f.Show();
         }
 
-        public int Finding(string substr, int start)
+        public int Finding(string substr, int start) 
         {
                     if (FindSubStr(substr, start) != -1)
                     {
@@ -336,12 +347,12 @@ namespace TextEditor
                     }
                     else
                     {
-                        MessageBox.Show("Слово найдено!");
+                        MessageBox.Show("Word not found!");
                     }
             return start;
         }
 
-        public int FindSubStr(string substr, int start)
+        public int FindSubStr(string substr, int start) //Поиск слова
         {
             int returnValue = -1;
 
