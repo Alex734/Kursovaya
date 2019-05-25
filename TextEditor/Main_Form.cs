@@ -44,7 +44,17 @@ namespace TextEditor
             }
             else if (result == DialogResult.No)
             {
-                this.richTextBox1.Clear(); //Удаление текста из элем. упр. текстовым полем
+                richTextBox1.Clear();
+                path = "";//Удаление текста из элем. упр. текстовым полем
+                filename = "Безымянный";
+                this.Text = filename;
+            }
+            else if (richTextBox1.Text.Trim() != "" && change == 0)
+            {
+                richTextBox1.Clear();
+                path = "";//Удаление текста из элем. упр. текстовым полем
+                filename = "Безымянный";
+                this.Text = filename;
             }
         }
 
@@ -64,15 +74,37 @@ namespace TextEditor
             else
             {
                 if (openFileDialog1.ShowDialog() == DialogResult.Cancel)
+                {
                     return;
-                // получаем выбранный файл
-                path = openFileDialog1.FileName;
-                filename = Path.GetFileNameWithoutExtension(path);
-                // читаем файл в строку
-                string fileText = File.ReadAllText(path, Encoding.Default);
-                richTextBox1.Text = fileText;
-                change = 0;
+                }
 
+
+                // получаем выбранный файл   
+                path = openFileDialog1.FileName;
+                try
+                {
+                    filename = Path.GetFileNameWithoutExtension(path);
+                    // читаем файл 
+                    try
+                    {
+                        if (Path.GetExtension(path) == ".rtf")
+                            richTextBox1.LoadFile(path);
+                        else
+                            File.ReadAllText(path, Encoding.Default);
+                    }
+                    catch (ArgumentException)
+                    {
+                        MessageBox.Show("This file is not RTF format!" + "\n" + "Reading in txt format!");
+                        richTextBox1.Text = File.ReadAllText(path);
+                    }
+                }
+                catch (DirectoryNotFoundException)
+                {
+                    MessageBox.Show("File not found");
+                }
+
+
+                change = 0;
                 this.Text = filename;
             }               
         }
@@ -85,10 +117,31 @@ namespace TextEditor
             change = 0;
             // получаем выбранный файл
             path = saveFileDialog1.FileName;
-            filename = Path.GetFileNameWithoutExtension(path);
+            try
+            {
+                filename = Path.GetFileNameWithoutExtension(path);
+                // читаем файл 
+            }
+            catch (DirectoryNotFoundException)
+            {
+                MessageBox.Show("File not found");
+            }
             // сохраняем текст в файл
-            File.WriteAllText(path, richTextBox1.Text, Encoding.Default);
-
+            try
+            {
+                if (Path.GetExtension(path) == ".rtf")
+                    richTextBox1.LoadFile(path);
+                else
+                    File.ReadAllText(path, Encoding.Default);
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
             this.Text = filename;
         }
 
@@ -97,7 +150,14 @@ namespace TextEditor
         {
             if (path != "")
             {
-                File.WriteAllText(path, richTextBox1.Text, Encoding.Default);
+                try
+                {
+                    File.WriteAllText(path, richTextBox1.Rtf, Encoding.Default);
+                }
+                catch (ArgumentNullException ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
                 change = 0;
             }
             else
@@ -145,8 +205,8 @@ namespace TextEditor
 
         private void richTextBox1_KeyDown(object sender, KeyEventArgs e) 
         {
-            undoActions.Push(richTextBox1.Text); // Запись в стек предыдущей версии текста
-
+            // Запись в стек предыдущей версии текста
+            undoActions.Push(richTextBox1.Text);
         }
 
         private void undoToolStripMenuItem_Click(object sender, EventArgs e) // Отмена последнего действия
@@ -156,7 +216,7 @@ namespace TextEditor
                 return;
             }
 
-            if (redoActions.Count == 0 || richTextBox1.Text != "")
+            if (redoActions.Count == 0 || richTextBox1.Text.Trim() != "" )
             {
                 redoActions.Push(richTextBox1.Text);
             }
@@ -177,10 +237,10 @@ namespace TextEditor
             }
 
             richTextBox1.Text = redoActions.Pop();
-
+            
         }
 
-        private void richTextBox1_TextChanged(object sender, EventArgs e) // Проверка на возможность выполнения действия Undo/Redo
+        private void richTextBox1_TextChanged(object sender, EventArgs e) 
         {
             if (richTextBox1.Text.Trim() != "")
                 findToolStripMenuItem.Enabled = true;
@@ -188,7 +248,7 @@ namespace TextEditor
                 findToolStripMenuItem.Enabled = false;
 
             change = 1;
-
+            // Проверка на возможность выполнения действия Undo/Redo
             if (undoActions.Count == 0)
                 undoToolStripMenuItem.Enabled = false;
             else
@@ -207,17 +267,24 @@ namespace TextEditor
 
         private void cutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            richTextBox1.Cut(); //Вырезка
+            if (richTextBox1.SelectedText != "")
+  
+                richTextBox1.Cut(); //Вырезка
         }
 
         private void copyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            richTextBox1.Copy(); // Копирование
+            if (richTextBox1.SelectionLength > 0)
+                
+                richTextBox1.Copy(); // Копирование
         }
 
         private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            richTextBox1.Paste(); //Вставка
+            if (Clipboard.GetDataObject().GetDataPresent(DataFormats.Text) == true)
+            {
+                richTextBox1.Paste(); //Вставка
+            } 
         }
 
         private void fontToolStripMenuItem_Click(object sender, EventArgs e) //Изменение шрифта текста
@@ -242,16 +309,16 @@ namespace TextEditor
 
             switch (btn)
             {
-                case "Left":
-                    richTextBox1.SelectionAlignment = HorizontalAlignment.Left;
-                    break;
-                case "Right":
-                    richTextBox1.SelectionAlignment = HorizontalAlignment.Right;
-                    break;
-                case "Center":
-                    richTextBox1.SelectionAlignment = HorizontalAlignment.Center;
-                    break;
-            }
+                 case "Left":
+                        richTextBox1.SelectionAlignment = HorizontalAlignment.Left;
+                        break;
+                 case "Right":
+                        richTextBox1.SelectionAlignment = HorizontalAlignment.Right;
+                        break;
+                 case "Center":
+                        richTextBox1.SelectionAlignment = HorizontalAlignment.Center;
+                        break;
+            }            
         }
 
         private void rightToolStripMenuItem_Click(object sender, EventArgs e) 
@@ -290,6 +357,53 @@ namespace TextEditor
         private void toolStripButton4_Click(object sender, EventArgs e)
         {
             toolStripButton1_Click(sender, e);
+
+        }
+
+        private void richTextBox1_Click(object sender, EventArgs e) // Определение состояния кнопок изменения стиля 
+        {
+            Font currentFont = richTextBox1.SelectionFont;
+
+            if (currentFont.Bold) toolStripButton1.Checked = true; else toolStripButton1.Checked = false;
+            if (currentFont.Italic) toolStripButton2.Checked = true; else toolStripButton2.Checked = false;
+            if (currentFont.Underline) toolStripButton3.Checked = true; else toolStripButton3.Checked = false;
+            if (currentFont.Strikeout) toolStripButton4.Checked = true; else toolStripButton4.Checked = false;
+        }
+
+        private void findToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Find f = new Find();
+            f.Show();
+        }
+
+        public int Finding(string substr, int start)
+        {
+            if (FindSubStr(substr, start) != -1)
+            {
+                start = FindSubStr(substr, start) + substr.Length;
+                this.Activate();
+            }
+            else
+            {
+                MessageBox.Show("Word not found!");
+            }
+            return start;
+        }
+
+        public int FindSubStr(string substr, int start) //Поиск слова
+        {
+            int returnValue = -1;
+
+            if (substr.Length > 0 && start >= 0)
+            {
+                int indexToText = richTextBox1.Find(substr, start, RichTextBoxFinds.MatchCase);
+                if (indexToText >= 0)
+                {
+                    returnValue = indexToText;
+                }
+            }
+
+            return returnValue;
         }
 
         private void создатьToolStripButton_Click(object sender, EventArgs e)
@@ -320,52 +434,6 @@ namespace TextEditor
         private void вставкаToolStripButton_Click(object sender, EventArgs e)
         {
             pasteToolStripMenuItem_Click(sender,e);
-        }
-
-        private void richTextBox1_Click(object sender, EventArgs e) // Определение состояния кнопок изменения стиля 
-        {
-            Font currentFont = richTextBox1.SelectionFont;
-
-            if (currentFont.Bold) toolStripButton1.Checked = true; else toolStripButton1.Checked = false;
-            if (currentFont.Italic) toolStripButton2.Checked = true; else toolStripButton2.Checked = false;
-            if (currentFont.Underline) toolStripButton3.Checked = true; else toolStripButton3.Checked = false;
-            if (currentFont.Strikeout) toolStripButton4.Checked = true; else toolStripButton4.Checked = false;
-        }
-
-        private void findToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Find f = new Find();
-            f.Show();
-        }
-
-        public int Finding(string substr, int start) 
-        {
-                    if (FindSubStr(substr, start) != -1)
-                    {
-                    start = FindSubStr(substr, start) + substr.Length;
-                    this.Activate(); 
-                    }
-                    else
-                    {
-                        MessageBox.Show("Word not found!");
-                    }
-            return start;
-        }
-
-        public int FindSubStr(string substr, int start) //Поиск слова
-        {
-            int returnValue = -1;
-
-            if (substr.Length > 0 && start >= 0)
-            {
-                int indexToText = richTextBox1.Find(substr, start, RichTextBoxFinds.MatchCase);
-                if (indexToText >= 0)
-                {
-                    returnValue = indexToText;
-                }
-            }
-
-            return returnValue;
         }
     }
 }
